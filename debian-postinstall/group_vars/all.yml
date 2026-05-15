@@ -2,7 +2,7 @@ new_user: hafiz
 timezone: Asia/Jakarta
 sudo_nopasswd: false
 
-ssh_public_key: "REPLACE_WITH_YOUR_SSH_PUBLIC_KEY"
+ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHiVtigD/u7sBuAW3iWwZXjMv/IlA9ev4r4lNHHH8nLF"
 
 essential_packages:
   - sudo
@@ -30,4 +30,4 @@ essential_packages:
   - chrony
   - qemu-guest-agent
   - bash-completion
-  - software-properties-common
+
