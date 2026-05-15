@@ -9,6 +9,7 @@
         update_cache: true
         upgrade: dist
         cache_valid_time: 3600
+      register: apt_upgrade
 
     - name: Install essential packages
       apt:
@@ -45,10 +46,10 @@
         key: "{{ ssh_public_key }}"
         state: present
 
-    - name: Allow sudo without password for user
+    - name: Configure sudo policy for user
       copy:
         dest: "/etc/sudoers.d/{{ new_user }}"
-        content: "{{ new_user }} ALL=(ALL) NOPASSWD:ALL\n"
+        content: "{{ new_user }} ALL=(ALL) {{ 'NOPASSWD:' if sudo_nopasswd | bool else '' }}ALL\n"
         owner: root
         group: root
         mode: "0440"
@@ -143,3 +144,4 @@
       reboot:
         msg: "Rebooting after Debian postinstall"
         reboot_timeout: 600
+      when: apt_upgrade is changed

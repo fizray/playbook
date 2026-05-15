@@ -1,5 +1,6 @@
 new_user: hafiz
 timezone: Asia/Jakarta
+sudo_nopasswd: false
 
 ssh_public_key: "PASTE_PUBLIC_KEY_KAMU_DI_SINI"
 
