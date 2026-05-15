@@ -2,7 +2,7 @@ new_user: hafiz
 timezone: Asia/Jakarta
 sudo_nopasswd: false
 
-ssh_public_key: "PASTE_YOUR_PUBLIC_KEY_HERE"
+ssh_public_key: "REPLACE_WITH_YOUR_SSH_PUBLIC_KEY"
 
 essential_packages:
   - sudo

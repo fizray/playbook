@@ -4,6 +4,12 @@
   become: true
 
   tasks:
+    - name: Validate SSH public key variable
+      assert:
+        that:
+          - ssh_public_key != "REPLACE_WITH_YOUR_SSH_PUBLIC_KEY"
+        fail_msg: "Set ssh_public_key in group_vars/all.yml before running this playbook."
+
     - name: Update apt cache and upgrade packages
       apt:
         update_cache: true
