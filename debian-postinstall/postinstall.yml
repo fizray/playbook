@@ -104,13 +104,11 @@
       command: swapon --noheadings --show
       register: active_swap
       changed_when: false
-      failed_when: false
 
     - name: Disable swap immediately
       command: swapoff -a
       when: active_swap.stdout | trim != ""
       changed_when: true
-      failed_when: false
 
     - name: Disable swap permanently
       replace:
