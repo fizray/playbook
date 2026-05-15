@@ -100,9 +100,16 @@
         owner: "{{ new_user }}"
         group: "{{ new_user }}"
 
+    - name: Check active swap
+      command: swapon --noheadings --show
+      register: active_swap
+      changed_when: false
+      failed_when: false
+
     - name: Disable swap immediately
       command: swapoff -a
-      changed_when: false
+      when: active_swap.stdout | trim != ""
+      changed_when: true
       failed_when: false
 
     - name: Disable swap permanently
@@ -129,16 +136,17 @@
         state: present
 
     - name: Configure sysctl for k8s future usage
-      copy:
-        dest: /etc/sysctl.d/99-k8s.conf
-        content: |
-          net.bridge.bridge-nf-call-iptables = 1
-          net.bridge.bridge-nf-call-ip6tables = 1
-          net.ipv4.ip_forward = 1
-
-    - name: Apply sysctl
-      command: sysctl --system
-      changed_when: false
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_set: true
+        reload: true
+        sysctl_file: /etc/sysctl.d/99-k8s.conf
+      loop:
+        - { name: "net.bridge.bridge-nf-call-iptables", value: "1" }
+        - { name: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
+        - { name: "net.ipv4.ip_forward", value: "1" }
 
     - name: Reboot if needed
       reboot:
