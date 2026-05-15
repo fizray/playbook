@@ -1,0 +1,145 @@
+---
+- name: Debian minimal postinstall
+  hosts: debian_vms
+  become: true
+
+  tasks:
+    - name: Update apt cache and upgrade packages
+      apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Install essential packages
+      apt:
+        name: "{{ essential_packages }}"
+        state: present
+
+    - name: Set timezone
+      timezone:
+        name: "{{ timezone }}"
+
+    - name: Enable chrony
+      systemd:
+        name: chrony
+        enabled: true
+        state: started
+
+    - name: Enable qemu guest agent
+      systemd:
+        name: qemu-guest-agent
+        enabled: true
+        state: started
+
+    - name: Create user
+      user:
+        name: "{{ new_user }}"
+        shell: /bin/bash
+        groups: sudo
+        append: true
+        create_home: true
+
+    - name: Add SSH key for user
+      authorized_key:
+        user: "{{ new_user }}"
+        key: "{{ ssh_public_key }}"
+        state: present
+
+    - name: Allow sudo without password for user
+      copy:
+        dest: "/etc/sudoers.d/{{ new_user }}"
+        content: "{{ new_user }} ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Harden SSH config
+      copy:
+        dest: /etc/ssh/sshd_config.d/99-hardening.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          PermitRootLogin prohibit-password
+          PasswordAuthentication no
+          PubkeyAuthentication yes
+          X11Forwarding no
+
+    - name: Restart SSH
+      systemd:
+        name: ssh
+        state: restarted
+
+    - name: Configure UFW default deny incoming
+      ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Configure UFW default allow outgoing
+      ufw:
+        direction: outgoing
+        policy: allow
+
+    - name: Allow SSH
+      ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+
+    - name: Enable bash completion for user
+      lineinfile:
+        path: "/home/{{ new_user }}/.bashrc"
+        line: "source /etc/bash_completion"
+        create: true
+        owner: "{{ new_user }}"
+        group: "{{ new_user }}"
+
+    - name: Disable swap immediately
+      command: swapoff -a
+      changed_when: false
+      failed_when: false
+
+    - name: Disable swap permanently
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*\sswap\s.*)$'
+        replace: '# \1'
+
+    - name: Enable kernel modules config for k8s future usage
+      copy:
+        dest: /etc/modules-load.d/k8s.conf
+        content: |
+          overlay
+          br_netfilter
+
+    - name: Load overlay module
+      modprobe:
+        name: overlay
+        state: present
+
+    - name: Load br_netfilter module
+      modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: Configure sysctl for k8s future usage
+      copy:
+        dest: /etc/sysctl.d/99-k8s.conf
+        content: |
+          net.bridge.bridge-nf-call-iptables = 1
+          net.bridge.bridge-nf-call-ip6tables = 1
+          net.ipv4.ip_forward = 1
+
+    - name: Apply sysctl
+      command: sysctl --system
+      changed_when: false
+
+    - name: Reboot if needed
+      reboot:
+        msg: "Rebooting after Debian postinstall"
+        reboot_timeout: 600
