@@ -1,0 +1,33 @@
+new_user: hafiz
+timezone: Asia/Jakarta
+sudo_nopasswd: false
+
+ssh_public_key: "REPLACE_WITH_YOUR_SSH_PUBLIC_KEY"
+
+essential_packages:
+  - sudo
+  - curl
+  - wget
+  - git
+  - vim
+  - nano
+  - htop
+  - btop
+  - ncdu
+  - unzip
+  - zip
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - net-tools
+  - dnsutils
+  - iproute2
+  - iputils-ping
+  - traceroute
+  - tcpdump
+  - rsync
+  - ufw
+  - chrony
+  - qemu-guest-agent
+  - bash-completion
+  - software-properties-common
